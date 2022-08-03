@@ -1,4 +1,4 @@
-# OV7670  
+# OV7670 (In Progess)
 Description: A verilog-based project that shows real-time video captured by a camera and displayed on a monitor.
   
 ## Materials Used:    
