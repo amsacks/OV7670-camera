@@ -7,3 +7,4 @@
 4. 4.7k Ohm Pull-Resistors                (2)
 5. Male-Male VGA Video Connector          (1)
 6. OV7670 CMOS VGA (640x480) Camera       (1)
+7. Monitor that supports VGA              (1)
