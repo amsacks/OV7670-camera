@@ -2,7 +2,7 @@
 
 // Includes modules: cam_rom, cam_config, sccb_master 
 module cam_interface
-    #(  parameter CLK_F = 25_000_000,
+    #(  parameter CLK_F = 100_000_000,
         parameter SCCB_F = 400_000 )
     (   input  i_clk,
         input  i_rst,      
