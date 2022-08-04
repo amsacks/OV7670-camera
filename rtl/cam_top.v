@@ -33,9 +33,9 @@ module cam_top
         
     debounce #(.DELAY(CAM_CONFIG_CLK/1000))    
     button0
-    (   .clk(i_clk      ), 
-        .in(i_cam_start ),
-        .out(start_db   )
+    (   .i_clk(i_clk      ), 
+        .i_in(i_cam_start ),
+        .o_out(start_db   )
     );
     
     cam_interface #(.CLK_F(CAM_CONFIG_CLK), .SCCB_F(400_000) )
