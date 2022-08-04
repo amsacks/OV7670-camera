@@ -9,3 +9,4 @@ Description: A verilog-based project that shows real-time video captured by a ca
 5. Male-Male VGA Video Connector          (1)
 6. OV7670 CMOS VGA (640x480) Camera       (1)
 7. Monitor that supports VGA              (1)
+8. Breadboard                             (1)
