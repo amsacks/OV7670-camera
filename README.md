@@ -1,5 +1,5 @@
 # OV7670 (In Progess)
-Description: A verilog-based project that shows real-time video captured by a camera and displayed on a monitor.
+Description: A RTL-based project in Verilog that shows real-time video captured by a camera and displayed on a monitor. This was done as a mini summer project to gain more experience in digital logic design.
   
 ## Hardware:    
 1. Nexys A7-100T FPGA Developmental Board (1)
