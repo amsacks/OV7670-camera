@@ -1,4 +1,4 @@
-# OV7670 (In Progess)
+# OV7670 
 Description: A RTL-based project in Verilog that shows real-time video captured by a camera and displayed on a monitor. This was done as a mini summer project to gain more experience in digital logic design.
   
 ## Hardware:    
