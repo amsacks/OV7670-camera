@@ -145,10 +145,10 @@ module sccb_master
                     r_byte_index     <=  r_byte_index + 1'b1;
                     state            <= (r_byte_index == 3) ? END_1 : DATA_1;
                     case(r_byte_index)
-                        2'b00: r_tx <= {CAM_ADDR, ~i_write, 1'b0};            // Assume i_write/i_read cannot be 1 at the same time. 9th bit is Don't Care Bit
-                        2'b01: r_tx <= {r_latched_addr, 1'b0}; 
-                        2'b10: r_tx <= {r_latched_data, 1'b0};
-                        default: r_tx <= {r_latched_data, 1'b0}; 
+                       2'b00: r_tx <= {CAM_ADDR, ~i_write, 1'b1};            // Assume i_write/i_read cannot be 1 at the same time. 9th bit is Don't Care Bit
+                       2'b01: r_tx <= {r_latched_addr, 1'b1}; 
+                       2'b10: r_tx <= {r_latched_data, 1'b1};
+                       default: r_tx <= {r_latched_data, 1'b1}; 
                     endcase
                     
                     if((!i_write) && (!i_read)) begin
