@@ -145,9 +145,9 @@ module sccb_master
                     r_byte_index     <=  r_byte_index + 1'b1;
                     state            <= (r_byte_index == 3) ? END_1 : DATA_1;
                     case(r_byte_index)                                  // 3-Phase Write Cycle (no ack in SCCB)
-                       2'b00: r_tx <= {CAM_ADDR, ~i_write, 1'b1};       //   byte1 = {CAM_ADDR_WR, WR_BIT, Don't Care Bit}      
-                       2'b01: r_tx <= {r_latched_addr, 1'b1};           //   byte2 = {Register Addr,       Don't Care Bit} 
-                       2'b10: r_tx <= {r_latched_data, 1'b1};           //   byte3 = {Data to Register,    Don't Care Bit} 
+                       2'b00: r_tx <= {CAM_ADDR, ~i_write, 1'b1};       //   byte1 = {SLAVE ADDRESS, WR BIT, Don't Care Bit}      
+                       2'b01: r_tx <= {r_latched_addr, 1'b1};           //   byte2 = {Register Addr,         Don't Care Bit} 
+                       2'b10: r_tx <= {r_latched_data, 1'b1};           //   byte3 = {Data to Register,      Don't Care Bit} 
                        default: r_tx <= {r_latched_data, 1'b1}; 
                     endcase
                     
