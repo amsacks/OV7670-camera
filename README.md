@@ -1,5 +1,5 @@
 # OV7670 
-Description: A RTL-based project in Verilog that shows real-time video captured by a camera and displayed on a monitor. This was done as a mini summer project to gain more experience in digital logic design.  
+Description: A RTL-based project in Verilog that shows real-time video captured by a CMOS camera OV7670 and displayed on a monitor through VGA at 640 x 480 resolution, 30 fps.    
   
 ## System Architecture 
   ![image](https://github.com/amsacks/OV7670/blob/main/misc/OV7670_block_diagram.png)  
