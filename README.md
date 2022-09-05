@@ -5,7 +5,7 @@ Description: A RTL-based project in Verilog that shows real-time video captured 
   ![image](https://github.com/amsacks/OV7670/blob/main/misc/OV7670_block_diagram.png)  
   
 ## Video Demo
-  [![video](https://github.com/amsacks/FPGA-real-time-video-capture/blob/main/misc/youtube_ov7670_image.jpg)](https://youtube.com/shorts/bjaxS5tyzRs)    
+  [![video](https://github.com/amsacks/FPGA-real-time-video-capture/blob/main/misc/youtube_ov7670_image.jpg)](https://youtu.be/PbZsmB2INCU)    
   
 ## Hardware:    
 1. Nexys A7-100T FPGA Developmental Board (1)
