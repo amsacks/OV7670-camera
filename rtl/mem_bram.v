@@ -1,36 +1,42 @@
 `timescale 1ns / 1ps
+`default_nettype none
+
+/*
+ *  Infers a dual-port BRAM with variable width and depth 
+ *  
+ *  NOTE: 
+ *  - One clock delay with read/write
+ *
+ */
 
 module mem_bram
-    #(  parameter DATA_WIDTH = 12, 
-        parameter DEPTH      = 640*480 )
-     (  input                      w_clk,
-        input                      w_en, 
-        input [DATA_WIDTH-1:0]     w_din,
-        input [$clog2(DEPTH)-1:0]  w_addr,
+#(parameter WIDTH = 11,
+    parameter DEPTH = 640*480)
+    (   input wire                      i_wclk,
+        input wire                      i_wr,
+        input wire [$clog2(DEPTH)-1:0]  i_wr_addr,
         
-        input                      r_clk,
-        input                      r_en,
-        input  [$clog2(DEPTH)-1:0] r_addr, 
-        output [DATA_WIDTH-1:0]    r_dout   
+        input wire                      i_rclk,
+        input wire                      i_rd,
+        input wire [$clog2(DEPTH)-1:0]  i_rd_addr,
+        
+        input wire                      i_bram_en,
+        input wire [WIDTH-1:0]          i_bram_data,
+        output reg [WIDTH-1:0]          o_bram_data      
     );
     
-    // Infer Simple-Dual Port BRAM with dual clocks
-    // https://docs.xilinx.com/v/u/2019.2-English/ug901-vivado-synthesis (page 113)
-    reg [DATA_WIDTH-1:0] bram [DEPTH-1:0];
-    reg [DATA_WIDTH-1:0] reg_dout; 
+    // Infer dual-port BRAM with dual clocks
+    // https://docs.xilinx.com/v/u/2019.2-English/ug901-vivado-synthesis (page 126)
+    reg [WIDTH-1:0] ram [0:DEPTH-1]; 
     
-    always @(posedge w_clk)
-        begin   
-            if(w_en)
-                bram[w_addr] <= w_din;
-        end 
+    always @(posedge i_wclk)
+    if(i_bram_en)
+        if(i_wr)
+            ram[i_wr_addr] <= i_bram_data;
     
-    always @(posedge r_clk)
-        begin
-            if(r_en)
-                reg_dout <= bram[r_addr]; 
-        end 
-    
-    assign r_dout = reg_dout; 
-    
+    always @(posedge i_rclk)
+    if(i_rd)
+        o_bram_data <= ram[i_rd_addr]; 
+
 endmodule
+
