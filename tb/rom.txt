@@ -1,0 +1,77 @@
+1280    // COM7
+FFF0    // Delay
+1204    // COM7
+1100    // CLKRC
+0C00    // COM3
+3E00    // COM14
+0400    // COM1
+8C02    // RGB444
+40D0    // COM 15
+3a04    // TSLB
+1418    // COM9
+4FB3    // MTX1
+50B3    // MTX2
+5100    // MTX3
+523d  // MTX4
+53A7  // MTX5
+54E4  // MTX6
+589E  // MTXS
+3DC0  // COM13        sets gamma enable, does not preserve reserved bits, may be wrong?
+1714  // HSTART       start high 8 bits
+1802  // HSTOP        stop high 8 bits //these kill the odd colored line
+3280  // HREF         edge offset
+1903  // VSTART       start high 8 bits
+1A7B  // VSTOP        stop high 8 bits
+030A  // VREF         vsync edge offset
+0F41  // COM6         reset timings
+1E00  // MVFP         disable mirror / flip //might have magic value of 03
+330B  // CHLF         magic value from the internet
+3C78  // COM12        no HREF when VSYNC low
+6900  // GFIX         fix gain control
+7400  // REG74        Digital gain control
+B084  // RSVD         magic value from the internet *required* for good color
+B10c  // ABLC1
+B20e  // RSVD         more magic internet values
+B380  // THL_ST
+703a  // SCALING_XSC          *Leave as default. No test pattern output. 
+7135  // SCALING_YSC          *Leave as default. No test pattern output.
+7211  // SCALING DCWCTR       *Leave as default. Vertical down sample by 2. Horizontal down sample by 2.
+73f0  // SCALING PCLK_DIV 
+a202  // SCALING PCLK DELAY   *Leave as deafult. 
+7a20  // SLOP
+7b10  // GAM1
+7c1e  // GAM2
+7d35  // GAM3
+7e5a  // GAM4
+7f69  // GAM5
+8076  // GAM6
+8180  // GAM7
+8288  // GAM8
+838f  // GAM9
+8496  // GAM10
+85a3  // GAM11
+86af  // GAM12
+87c4  // GAM13
+88d7  // GAM14
+89e8  // GAM15
+13e0  // COM8     disable AGC / AEC
+0000  // set gain reg to 0 for AGC
+1000  // set ARCJ reg to 0
+0d40  // magic reserved bit for COM4
+1418  // COM9, 4x gain + magic bit
+a505  // BD50MAX
+ab07  // DB60MAX
+2495  // AGC upper limit
+2533  // AGC lower limit
+26e3  // AGC/AEC fast mode op region
+9f78  // HAECC1
+a068  // HAECC2
+a103  // magic
+a6d8  // HAECC3
+a7d8  // HAECC4
+a8f0  // HAECC5
+a990  // HAECC6
+aa94  // HAECC7
+13a7
+6906
+FFFF  // Done reading ROM 
