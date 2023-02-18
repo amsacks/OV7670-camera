@@ -1,134 +1,159 @@
 `timescale 1ns / 1ps
 
-module top
-    (   input clk,
-        input rst,
+`default_nettype none
 
-        input  cam_start,
-        output cam_done,
+module top
+    (   input wire i_top_clk,
+        input wire i_top_rst,
         
-        // I/O for FPGA to camera
-        input        pclk,
-        input [7:0]  pix_byte, 
-        input        vsync,
-        input        href,
-        output       RESET, 
-        output       PWDN,
-        output       xclk,
-        output       siod,
-        output       sioc,
+        input wire  i_top_cam_start, 
+        output wire o_top_cam_done, 
         
-        // I/O for FPGA to VGA
-        output [3:0] VGA_R,
-        output [3:0] VGA_G,
-        output [3:0] VGA_B,
-        output       VGA_vsync, 
-        output       VGA_hsync
+        // I/O to camera
+        input wire       i_top_pclk, 
+        input wire [7:0] i_top_pix_byte,
+        input wire       i_top_pix_vsync,
+        input wire       i_top_pix_href,
+        output wire      o_top_reset,
+        output wire      o_top_pwdn,
+        output wire      o_top_xclk,
+        output wire      o_top_siod,
+        output wire      o_top_sioc,
+        
+        // I/O to VGA 
+        output wire [3:0] o_top_vga_red,
+        output wire [3:0] o_top_vga_green,
+        output wire [3:0] o_top_vga_blue,
+        output wire       o_top_vga_vsync,
+        output wire       o_top_vga_hsync
     );
     
-    // clk to vga_top
-    wire clk25m;
+    // Connect cam_top/vga_top modules to BRAM
+    wire [11:0] i_bram_pix_data,    o_bram_pix_data;
+    wire [18:0] i_bram_pix_addr,    o_bram_pix_addr; 
+    wire        i_bram_pix_wr;
+    wire        i_VGA_rd;
     
-    // connect cam_top/vga_top to memory (BRAM)
-    wire [11:0] i_bram_pix_data,  o_bram_pix_data;
-    wire [18:0] i_bram_pix_addr,  o_bram_pix_addr; 
-    wire        i_bram_pix_wren;
+        
+    // Reset synchronizers for all clock domains
+    reg r1_rstn_top_clk,    r2_rstn_top_clk;
+    reg r1_rstn_pclk,       r2_rstn_pclk;
+    reg r1_rstn_clk25m,     r2_rstn_clk25m; 
+        
+    wire w_clk25m; 
     
-    /*  Double FF for Multi-clock reset using a common reset (rst in top module)
-     *  http://www.sunburst-design.com/papers/CummingsSNUG2003Boston_Resets.pdf  [page 33]
-     */
-    reg r1_rst_clk,    r2_rst_clk;
-    reg r1_rst_pclk,   r2_rst_pclk; 
-    reg r1_rst_clk25m, r2_rst_clk25m;
-         
-    always @(posedge clk or posedge rst)
-        begin
-            if(rst) {r2_rst_clk, r1_rst_clk} <= 2'b11;
-            else    {r2_rst_clk, r1_rst_clk} <= {r1_rst_clk, 1'b0};
-        end  
-    always @(posedge pclk or posedge rst)
-        begin
-            if(rst) {r2_rst_pclk, r1_rst_pclk} <= 2'b11;
-            else    {r2_rst_pclk, r1_rst_pclk} <= {r1_rst_pclk, 1'b0};
-        end 
-    always @(posedge clk25m or posedge rst)
-        begin
-            if(rst) {r2_rst_clk25m, r1_rst_clk25m} <= 2'b11;
-            else    {r2_rst_clk25m, r1_rst_clk25m} <= {r1_rst_clk25m, 1'b0};
-        end 
-    
-    // Generate clocks for VGA and camera 
-    clk_wiz_0 
-    vga_and_cam_clk
+    // Generate clocks for camera and VGA
+    clk_wiz_1
+    clock_gen
     (
-        .clk_in1(clk     ),
-        .reset(rst       ),
-        .clk_out1(clk25m ),
-        .clk_out2(xclk   ) 
+        .clk_in1(i_top_clk          ),
+        .clk_out1(w_clk25m          ),
+        .clk_out2(o_top_xclk        )
     );
     
-    // FPGA to camera interface module                              
-    cam_top #(.CAM_CONFIG_CLK(100_000_000))
-    camera
-    (   
-        .i_clk(clk                  ),
-        .i_rst_clk(r2_rst_clk       ),
-        .i_rst_pclk(r2_rst_pclk     ),
-        
-        // I/O for camera intialization 
-        .i_cam_start(cam_start      ),
-        .o_cam_done(cam_done        ),
-        
-         // I/O from FPGA to camera 
-        .i_pclk(pclk                ),
-        .i_pix_byte(pix_byte        ),
-        .i_vsync(vsync              ), 
-        .i_href(href                ), 
-        .o_RESET(RESET              ),
-        .o_PWDN(PWDN                ), 
-        .o_siod(siod                ),
-        .o_sioc(sioc                ),
-        
-        // Outputs from camera to memory (write)
-        .o_pix_wren(i_bram_pix_wren ), 
-        .o_pix_data(i_bram_pix_data ),
-        .o_pix_addr(i_bram_pix_addr )
+    wire w_rst_btn_db; 
+    
+    // Debounce top level button - invert reset to have debounced negedge reset
+    localparam DELAY_TOP_TB = 10; //240_000)         )  
+    debouncer 
+    #(  .DELAY(DELAY_TOP_TB)    )
+    top_btn_db
+    (
+        .i_clk(i_top_clk        ),
+        .i_btn_in(~i_top_rst    ),
+        .o_btn_db(w_rst_btn_db  )
     ); 
     
-    vga_top
-    display_module
-    (   
-        .i_clk25m(clk25m                ),
-        .i_rst_clk25m(r2_rst_clk25m     ),
+    // Double FF for negedge reset synchronization 
+    always @(posedge i_top_clk or negedge w_rst_btn_db)
+        begin
+            if(!w_rst_btn_db) {r2_rstn_top_clk, r1_rstn_top_clk} <= 0; 
+            else              {r2_rstn_top_clk, r1_rstn_top_clk} <= {r1_rstn_top_clk, 1'b1}; 
+        end 
+    always @(posedge w_clk25m or negedge w_rst_btn_db)
+        begin
+            if(!w_rst_btn_db) {r2_rstn_clk25m, r1_rstn_clk25m} <= 0; 
+            else              {r2_rstn_clk25m, r1_rstn_clk25m} <= {r1_rstn_clk25m, 1'b1}; 
+        end
+    always @(posedge i_top_pclk or negedge w_rst_btn_db)
+        begin
+            if(!w_rst_btn_db) {r2_rstn_pclk, r1_rstn_pclk} <= 0; 
+            else              {r2_rstn_pclk, r1_rstn_pclk} <= {r1_rstn_pclk, 1'b1}; 
+        end 
+    
+    // FPGA-camera interface
+    cam_top 
+    #(  .CAM_CONFIG_CLK(100_000_000)    )
+    OV7670_cam
+    (
+        .i_clk(i_top_clk                ),
+        .i_rstn_clk(r2_rstn_top_clk     ),
+        .i_rstn_pclk(r2_rstn_pclk       ),
         
-        // Output of VGA to top module 
-        .o_VGA_x(                       ),
-        .o_VGA_y(                       ), 
-        .o_VGA_vsync(VGA_vsync          ),
-        .o_VGA_hsync(VGA_hsync          ), 
-        .o_VGA_video(                   ),
-        .o_VGA_red(VGA_R                ),
-        .o_VGA_green(VGA_G              ),
-        .o_VGA_blue(VGA_B               ), 
+        // I/O for camera init
+        .i_cam_start(i_top_cam_start    ),
+        .o_cam_done(o_top_cam_done      ), 
         
-        // I/O from VGA top to memory (read)
-        .i_pix_mem_data(o_bram_pix_data ), 
-        .o_VGA_pix_addr(o_bram_pix_addr )
+        // I/O camera
+        .i_pclk(i_top_pclk              ),
+        .i_pix_byte(i_top_pix_byte      ), 
+        .i_vsync(i_top_pix_vsync        ), 
+        .i_href(i_top_pix_href          ),
+        .o_reset(o_top_reset            ),
+        .o_pwdn(o_top_pwdn              ),
+        .o_siod(o_top_siod              ),
+        .o_sioc(o_top_sioc              ), 
+        
+        // Outputs from camera to BRAM
+        .o_pix_wr(                      ),
+        .o_pix_data(i_bram_pix_data     ),
+        .o_pix_addr(i_bram_pix_addr     )
     );
     
-    mem_bram 
-    #( .DATA_WIDTH(12), .DEPTH(640*480))
-    BRAM
-    (  
-       .w_clk(pclk             ),
-       .w_en(i_bram_pix_wren   ),
-       .w_din(i_bram_pix_data  ),
-       .w_addr(i_bram_pix_addr ),
-       
-       .r_clk(clk25m           ),
-       .r_en(1'b1              ),
-       .r_addr(o_bram_pix_addr ),
-       .r_dout(o_bram_pix_data )    
+    mem_bram
+    #(  .WIDTH(12                       ), 
+        .DEPTH(640*480)                 )
+     pixel_memory
+     (
+        // BRAM Write signals (cam_top)
+        .i_wclk(i_top_pclk              ),
+        .i_wr(1'b1                      ), 
+        .i_wr_addr(i_bram_pix_addr      ),
+        .i_bram_data(i_bram_pix_data    ),
+        .i_bram_en(1'b1                 ),
+         
+         // BRAM Read signals (vga_top)
+        .i_rclk(w_clk25m                ),
+        .i_rd(1'b1                      ),
+        .i_rd_addr(o_bram_pix_addr      ), 
+        .o_bram_data(o_bram_pix_data    )
+     );
+     
+    wire X; 
+    wire Y;
+    
+    vga_top
+    display_interface
+    (
+        .i_clk25m(w_clk25m              ),
+        .i_rstn_clk25m(r2_rstn_clk25m   ), 
+        
+        // VGA timing signals
+        .o_VGA_x(X                      ),
+        .o_VGA_y(Y                      ), 
+        .o_VGA_vsync(o_top_vga_vsync    ),
+        .o_VGA_hsync(o_top_vga_hsync    ), 
+        .o_VGA_video(                   ),
+        
+        // VGA RGB Pixel Data
+        .o_VGA_red(o_top_vga_red        ),
+        .o_VGA_green(o_top_vga_green    ),
+        .o_VGA_blue(o_top_vga_blue      ), 
+        
+        // VGA read/write from/to BRAM
+        .i_pix_data(o_bram_pix_data     ), 
+        .o_pix_addr(o_bram_pix_addr     )
     );
+    
     
 endmodule
