@@ -54,7 +54,7 @@ module top
     wire w_rst_btn_db; 
     
     // Debounce top level button - invert reset to have debounced negedge reset
-    localparam DELAY_TOP_TB = 10; //240_000)         )  
+    localparam DELAY_TOP_TB = 240_000; //240_000 when uploading to hardware, 10 when simulating in testbench 
     debouncer 
     #(  .DELAY(DELAY_TOP_TB)    )
     top_btn_db
