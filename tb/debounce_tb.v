@@ -1,66 +1,76 @@
 `timescale 1ns / 1ps
 
-module debounce_tb #(T_CLK = 10);    // 100 MHz tb clock
- 
-    // Input to Debounce
-    reg  clk;
-    reg  in;
+/*
+ * A very simple self-check testbench to 
+ * verify that a glitchy input is filtered 
+ * after the delay in order to produce a
+ * debounced button output.
+ */
+
+module debouncer_tb();
     
-    // Output of Debounce 
-    wire out;
+    // For a 100 MHz clock, set up debounce time as 10 ms 
+    // Debounce Time = DELAY_TB/f_CLK
     
-    debounce 
-    #( .DELAY(100000))               // 1 ms debounced pulse 
+    localparam DELAY_TB = 1_000_000;  
+    localparam T_CLK    = 10;   // in ns
+    
+    reg   i_clk;
+    reg   i_btn_in;
+    wire  o_btn_db; 
+    
+    
+    // UUT Instantiation
+    debouncer
+    #(.DELAY(DELAY_TB))
     uut
     (
-        .i_clk(clk ), 
-        .i_in(in   ),
-        .o_out(out )
+        .i_clk(i_clk        ),
+        .i_btn_in(i_btn_in  ), 
+        .o_btn_db(o_btn_db  )
     ); 
     
-    initial                        
+    initial 
         begin
-            clk = 0; 
+            i_clk = 0;
+            i_btn_in = 0; 
         end 
     
-    always                          // 100 MHz clock 
-        begin   
-            #(T_CLK/2)
-            clk = ~clk; 
-        end 
- 
-    localparam eighth = 100000/8;
-    localparam fourth = 100000/4;
-    localparam half   = 100000/2; 
-    localparam total  = 100000;
-    localparam double = 2*(100000);
-    
-    // Simulate a glitchy input
+    always 
+        begin
+            #(T_CLK/2) 
+            i_clk = ~i_clk;
+        end
+   
     initial
-        begin
-            in = 0;
-            #(5*double)
-            in = 1; 
-            #(eighth/32)
-            in = 0;
-            #(fourth/32) 
-            in = 1; 
-            #(eighth/16)
-            in = 0;
-            #(half/32)
-            in = 1; 
-            #(2*total)
-            in = 0;
-            #(total/256)
-            in = 1;
-            #(half/512)
-            in = 0; 
-            #(fourth/32)
-            in = 1;
-            #(eighth)
-            in = 0; 
-            #(eighth/4)
-            $finish();
+        begin: TB
+            integer i;
+            
+            // Set up $time in units of ms with precision up to 6 decimals 
+            $timeformat(-3, 6, " ms" );
+            
+            $display("Starting testbench. \n");
+            #(2*T_CLK);
+            
+            $display("Simulating glitchy button input.\n");
+            for(i = 0; i < 20; i = i + 1)                     
+                begin
+                    $display("Time: %0t\n", $time);
+                    $display("Button State: %b\t Debounced Output: %b\n\n", i_btn_in, o_btn_db); 
+                    #(($urandom % DELAY_TB)*T_CLK)            
+                    i_btn_in = ~i_btn_in; 
+                end
+                
+            // Create a long enough delay to have a debounced output
+            for(i = 0; i < 3; i = i + 1)
+                begin
+                    $display("Time: %t\n", $time);
+                    $display("Button State: %b\t Debounced Output: %b\n\n", i_btn_in, o_btn_db);
+                    #((DELAY_TB+1)*T_CLK)
+                    i_btn_in = ~i_btn_in; 
+                end
+
+            $finish(); 
         end 
-        
+
 endmodule
