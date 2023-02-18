@@ -1,27 +1,34 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
+/*
+ *  Creates SCCB serial protocol in order to write data 
+ *  to OV7670 registers for configuring pixel output 
+ *  
+ */
+ 
 module sccb_master
-   #(parameter CLK_F = 100_000_000,
-     parameter SCCB_F = 400_000)
-     (  input         i_clk,
-        input         i_rst,
+#(parameter CLK_F = 100_000_000,
+    parameter SCCB_F = 400_000)
+    (   input wire          i_clk,
+        input wire          i_rstn,
         
-        input         i_read,       // I2C Commands. Assume read/write is mutually exclusive
-        input         i_write,
-        input         i_start,
-        input         i_restart,
-        input         i_stop,
+        input wire          i_read,       // I2C Commands. Assume read/write are mutually exclusive
+        input wire          i_write,
+        input wire          i_start,
+        input wire          i_restart,
+        input wire          i_stop,
         
-        input   [7:0] i_din,
-        input   [7:0] i_addr, 
+        input wire   [7:0]  i_din,
+        input wire   [7:0]  i_addr, 
         
-        output  [7:0] o_dout,
-        output        o_ready,      
-        output        o_done,       // 1-cycle tick when a transaction is completed 
-        output        o_ack,       
+        output wire  [7:0]  o_dout,
+        output wire         o_ready,      
+        output wire         o_done,       // 1-cycle tick when a transaction is completed 
+        output wire         o_ack,       
         
-        inout         io_sda,      
-        output        o_scl
+        inout  wire         io_sda,      
+        output wire         o_scl
      );
      
     // Camera Address for writing  
@@ -41,7 +48,7 @@ module sccb_master
                      END_1     = 10,
                      END_2     = 11;
                      
-    // CLK_F/I2C_F is number of clocks in ONE period of the I2C clock (SCL)                   
+    // CLK_F/SCCB_F is number of clocks in ONE period of the SCCB clock (SCL)                   
     localparam TIMER_WIDTH = $clog2(CLK_F/SCCB_F); 
     localparam HALF        = CLK_F/(2*SCCB_F);
     localparam QUARTER     = HALF/2;
@@ -68,15 +75,18 @@ module sccb_master
     reg r_write;
     
    initial begin
-        state    = IDLE;
-        r_ready  = 1'b1;
-        r_scl    = 1'b1; 
-        r_sda    = 1'b1; 
+        state       = IDLE;
+        r_ready     = 1'b1;
+        r_scl       = 1'b1; 
+        r_sda       = 1'b1;
+        r2_scl      = 1'b1;
+        r2_en_sda   = 1'b1; 
+        r_done      = 1'b0; 
    end
             
-    always @(posedge i_clk or posedge i_rst)
+    always @(posedge i_clk or negedge i_rstn)
         begin
-            if(i_rst) begin
+            if(!i_rstn) begin
                 r2_scl    <= 1'b1;
                 r2_en_sda <= 1'b1;
             end
@@ -92,19 +102,18 @@ module sccb_master
             r_write <= i_write;
         end
         
-          
+    // 2-Wire SCCB bus lines
     assign i_sda  = (data_state && r_read) || (data_state && r_write && r_data_bit_index == 8);
     assign o_scl  = (r2_scl)             ? 1'bZ : 1'b0; 
     assign io_sda = (i_sda || r2_en_sda) ? 1'bZ : 1'b0;
     
     
     // State Machine 
-    
     always @(posedge i_clk)
         begin
             timer <= timer + 1'b1;              // Free Running Counter
             case(state)
-                IDLE: begin
+                IDLE: begin                     // SDA and SCL line high; Wait for start command
                     timer            <= 0;
                     r_ready          <= 1'b1;
                     r_done           <= 1'b0;
@@ -154,6 +163,7 @@ module sccb_master
                     if((!i_write) && (!i_read)) begin
                         if(i_stop)                      state <= END_1; 
                         else if(i_restart || i_start)   state <= RESTART;
+                        else                            state <= IDLE; 
                     end
                 end 
                 DATA_1: begin   // Load Data Bit to SDA before sampled by SCL
@@ -165,13 +175,14 @@ module sccb_master
                         state <= DATA_2; 
                     end
                 end
-                DATA_2: begin   // SCL Samples the Data Bit (Shift in in read/Shift out in write)
+                DATA_2: begin   // SCL Samples the Data Bit (Shift in for read/Shift out for write)
                     r_sda <= r_tx[8];
                     r_scl <= 1'b1; 
-                    if(timer == (QUARTER-1)) begin
+                    // Sample read bits in the middle of SCL being HIGH for sample reads
+                    if(timer == (QUARTER-1)) begin      
                         timer <= 0; 
                         state <= DATA_3;
-                        r_rx  <= {r_rx[7:0], io_sda};   // Shift Data In
+                        r_rx  <= {r_rx[7:0], io_sda};   
                     end
                 end 
                 DATA_3: begin   // Wait another quarter SCL cycle of it being HIGH
@@ -235,7 +246,7 @@ module sccb_master
             endcase 
         end 
 
-    // Assign Output from I2C Reads
+    // Assign Output from SCCBA Reads ( don't read ACK bit )
     assign o_dout = r_rx[8:1]; 
     // ACK (from slave in writes should be '0')
     assign o_ack = r_rx[0]; 
