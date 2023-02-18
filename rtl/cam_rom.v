@@ -1,15 +1,27 @@
 `timescale 1ns / 1ps
+`default_nettype none
+
+/*
+ *  Synchronous ROM that contains OV7670 reg addr, OV7670 reg data;
+ *  End of ROM is marked by o_dout = 16'hFF_FF
+ *
+ *  NOTE:  
+ *  - One clock cycle delay
+ *  - Must reset SCCB registers first then include 10 ms delay after
+ *    to allow the change to settle
+ *  
+ */
 
 module cam_rom
-    (   input             i_clk,
-        input             i_rst,
-        input       [7:0] i_addr,
+    (   input wire        i_clk,
+        input wire        i_rstn,
+        input wire  [7:0] i_addr,
         output reg [15:0] o_dout
     );
     
     // Registers for OV7670 for configuration of RGB 444 
-    always @(posedge i_clk or posedge i_rst) begin
-        if(i_rst) o_dout <= 0; 
+    always @(posedge i_clk or negedge i_rstn) begin
+        if(!i_rstn) o_dout <= 0; 
         else begin 
             case(i_addr)
             0:  o_dout <= 16'h12_80;  // COM7:        Reset SCCB registers
@@ -20,7 +32,7 @@ module cam_rom
             5:  o_dout <= 16'h3E_00;  // COM14,       *Leave as default. No scaling, normal pclock
             6:  o_dout <= 16'h04_00;  // COM1,        *Leave as default. Disable CCIR656
             7:  o_dout <= 16'h8C_02;  // RGB444       Enable RGB444 mode with xR GB.
-            8:  o_dout <= 16'h40_d0;  // COM15,       Output full range for RGB 444.
+            8:  o_dout <= 16'h40_D0;  // COM15,       Output full range for RGB 444. 
             9:  o_dout <= 16'h3a_04;  // TSLB         set correct output data sequence (magic)
             10: o_dout <= 16'h14_18;  // COM9         MAX AGC value x4
             11: o_dout <= 16'h4F_B3;  // MTX1         all of these are magical matrix coefficients
@@ -90,7 +102,7 @@ module cam_rom
             72: o_dout <= 16'ha9_90;  // HAECC6
             73: o_dout <= 16'haa_94;  // HAECC7
             74: o_dout <= 16'h13_a7;  // COM8, enable AGC / AEC
-            75: o_dout <= 16'h69_06;   
+            75: o_dout <= 16'h69_06;     
             default: o_dout <= 16'hFF_FF;         //mark end of ROM
             endcase
         end
