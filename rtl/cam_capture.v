@@ -24,7 +24,7 @@ module cam_capture
         input wire         i_href,    
         input wire  [7:0]  i_D,
         input wire         i_cam_done,
-        output wire [18:0] o_pix_addr, 
+        output reg  [18:0] o_pix_addr, 
         output reg  [11:0] o_pix_data,      
         output reg         o_wr                   
     );
@@ -48,34 +48,33 @@ module cam_capture
     reg        r_half_data;             
     reg [1:0]  SM_state;
     reg [3:0]  pixel_data;
-    reg [18:0] r_pix_addr;
                                                                          
     always @(posedge i_pclk)
         begin
             r_half_data         <= 0;
             o_wr                <= 0;
             o_pix_data          <= o_pix_data;  
-            r_pix_addr          <= r_pix_addr;
+            o_pix_addr          <= o_pix_addr;
             SM_state            <= WAIT;
             case(SM_state)
                 WAIT: 
                     begin
-                        // Skip the first two frames on start-up to synch with pixel data 
+                        // Skip the first two frames on start-up
                         SM_state    <= (frame_start && i_cam_done) ? IDLE : WAIT;
                     end
                 IDLE:        
                     begin
                         SM_state   <= (frame_start) ? CAPTURE : IDLE;
-                        r_pix_addr <= 0;
+                        o_pix_addr <= 0;
                         o_pix_data <= 0; 
                     end
                 CAPTURE:
                     begin
                         SM_state   <= (frame_done) ? IDLE : CAPTURE;
-                        r_pix_addr <= (r_half_data) ? r_pix_addr + 1'b1 : r_pix_addr;   
+                        o_pix_addr <= (r_half_data) ? o_pix_addr + 1'b1 : o_pix_addr;   
                         if(i_href)
                             begin 
-                                 // Register first byte 
+                                 // Register first byte
                                  if(!r_half_data)   
                                     pixel_data <= i_D[3:0];      
                                  r_half_data    <= ~r_half_data;                       
@@ -85,7 +84,5 @@ module cam_capture
                     end  
             endcase
         end
-     
-    assign o_pix_addr = r_pix_addr; 
-        
+             
 endmodule

@@ -21,7 +21,7 @@ module cam_init
         input wire      i_cam_init_start,
         output wire     o_siod,
         output wire     o_sioc,
-        output wire     o_cam_init_done,        // All ROM is read
+        output wire     o_cam_init_done,        
         
         // Signal used only for testbench
         output wire         o_data_sent_done,
@@ -38,8 +38,6 @@ module cam_init
     (   .i_clk(i_clk            ),
         .i_rstn(i_rstn          ), 
         
-        // Write addr/data to cam_config to be parsed
-        // cam ROM stored in form: w_cam_rom_data = { w_send_addr, w_send_data }
         .i_addr(w_cam_rom_addr  ),
         .o_dout(w_cam_rom_data  )
     );

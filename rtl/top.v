@@ -32,9 +32,7 @@ module top
     wire [11:0] i_bram_pix_data,    o_bram_pix_data;
     wire [18:0] i_bram_pix_addr,    o_bram_pix_addr; 
     wire        i_bram_pix_wr;
-    wire        i_VGA_rd;
-    
-        
+           
     // Reset synchronizers for all clock domains
     reg r1_rstn_top_clk,    r2_rstn_top_clk;
     reg r1_rstn_pclk,       r2_rstn_pclk;
