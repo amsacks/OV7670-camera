@@ -36,7 +36,7 @@ module vga_top
         
         // VGA read from BRAM 
         input  wire [11:0] i_pix_data, 
-        output wire [18:0] o_pix_addr
+        output reg  [18:0] o_pix_addr
     );
     
     vga_driver
@@ -60,7 +60,6 @@ module vga_top
         .o_hsync(o_VGA_hsync    )
     );
     
-    reg [18:0]  r_pix_addr;
     reg [3:0]   r_VGA_R;
     reg [3:0]   r_VGA_G; 
     reg [3:0]   r_VGA_B;
@@ -73,7 +72,7 @@ module vga_top
     if(!i_rstn_clk25m)
     begin
         r_SM_state <= WAIT_1;
-        r_pix_addr <= 0; 
+        o_pix_addr <= 0; 
     end
     else
         case(r_SM_state)
@@ -83,14 +82,14 @@ module vga_top
         READ: begin
             // Currently active video 
             if((o_VGA_y < 480) && (o_VGA_x < 639))
-                r_pix_addr <= (r_pix_addr == 307199) ? 0 : r_pix_addr + 1'b1;
+                o_pix_addr <= (o_pix_addr == 307199) ? 0 : o_pix_addr + 1'b1;
             else begin           
             // Next clock is active video 
             if( (o_VGA_x == 799) && ( (o_VGA_y == 524) || (o_VGA_y < 480) ) )
-                r_pix_addr <= r_pix_addr + 1'b1;
+                o_pix_addr <= o_pix_addr + 1'b1;
             // Next clock not active video 
             else if(o_VGA_y >= 480)
-                r_pix_addr <= 0;
+                o_pix_addr <= 0;
             end
         end 
         endcase
@@ -114,6 +113,5 @@ module vga_top
     assign o_VGA_red    = r_VGA_R;
     assign o_VGA_green  = r_VGA_G;
     assign o_VGA_blue   = r_VGA_B;
-    assign o_pix_addr   = r_pix_addr;
     
 endmodule
