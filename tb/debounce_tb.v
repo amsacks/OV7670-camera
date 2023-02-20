@@ -21,7 +21,7 @@ module debouncer_tb();
     
     
     // UUT Instantiation
-    debouncer
+    debounce
     #(.DELAY(DELAY_TB))
     uut
     (
